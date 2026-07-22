@@ -1,0 +1,913 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Support-Beam Inspector · Lesson 1.3 Limits and Continuity</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#EDF0F3;
+    --sheet:#FAFCFD;
+    --ink:#16222E;
+    --ink-soft:#5C6D7A;
+    --rule:#D3DCE3;
+    --rule-fine:#E4EAEE;
+    --steel:#37627F;
+    --left:#1F7A55;
+    --right:#9E2B2B;
+    --beam:#E07A1F;
+    --display:'Archivo', 'Helvetica Neue', Arial, sans-serif;
+    --body:'Source Serif 4', Georgia, serif;
+    --mono:'IBM Plex Mono', 'SF Mono', Menlo, monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    background:var(--paper);
+    color:var(--ink);
+    font-family:var(--body);
+    font-size:16px;
+    line-height:1.55;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1180px;margin:0 auto;padding:28px 20px 72px}
+
+  /* ---------- header ---------- */
+  .eyebrow{
+    font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;
+    color:var(--steel);margin:0 0 10px;
+  }
+  h1{
+    font-family:var(--display);font-weight:700;font-size:clamp(28px,4.2vw,44px);
+    letter-spacing:-.02em;line-height:1.05;margin:0 0 10px;
+  }
+  .lede{max-width:62ch;margin:0;color:var(--ink-soft);font-size:17px}
+  .lede b{color:var(--ink);font-weight:600}
+  .hr{height:1px;background:var(--rule);margin:26px 0 22px;border:0}
+
+  /* ---------- section tabs ---------- */
+  .tabs{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px}
+  .tab{
+    font-family:var(--display);font-weight:500;font-size:13px;
+    background:var(--sheet);border:1px solid var(--rule);color:var(--ink-soft);
+    padding:9px 13px;border-radius:2px;cursor:pointer;text-align:left;
+    display:flex;flex-direction:column;gap:3px;min-width:0;flex:1 1 190px;
+    transition:border-color .12s, background .12s;
+  }
+  .tab:hover{border-color:var(--steel)}
+  .tab .tab-id{font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--steel)}
+  .tab .tab-fn{font-family:var(--mono);font-size:12.5px;color:var(--ink)}
+  .tab[aria-selected="true"]{background:var(--ink);border-color:var(--ink);color:#fff}
+  .tab[aria-selected="true"] .tab-id{color:#93B0C4}
+  .tab[aria-selected="true"] .tab-fn{color:#fff}
+
+  /* ---------- console ---------- */
+  .console{display:grid;grid-template-columns:minmax(0,1.85fr) minmax(280px,1fr);gap:14px;align-items:start}
+  .panel{background:var(--sheet);border:1px solid var(--rule);border-radius:2px}
+  .panel-head{
+    display:flex;justify-content:space-between;align-items:baseline;gap:10px;
+    padding:10px 14px;border-bottom:1px solid var(--rule-fine);
+    font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--steel);
+  }
+  #stage{display:block;width:100%;height:460px;touch-action:none;cursor:crosshair}
+  .stage-note{
+    padding:8px 14px;border-top:1px solid var(--rule-fine);
+    font-size:13.5px;color:var(--ink-soft);
+  }
+  .stage-note .key{
+    display:inline-flex;align-items:center;gap:6px;margin-right:16px;
+    font-family:var(--mono);font-size:10.5px;letter-spacing:.04em;
+  }
+  .sw{width:11px;height:11px;border-radius:50%;flex:0 0 auto}
+  .sw.dash{width:13px;height:2px;border-radius:0}
+  .sw.ring{border:1.6px solid var(--ink);background:#fff}
+
+  /* ---------- instruments ---------- */
+  .instr{padding:14px}
+  .readout{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
+  .cell{border:1px solid var(--rule-fine);border-left-width:3px;padding:8px 9px;background:#fff}
+  .cell.l{border-left-color:var(--left)}
+  .cell.r{border-left-color:var(--right)}
+  .cell .k{font-family:var(--mono);font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-soft)}
+  .cell .v{font-family:var(--mono);font-size:15px;font-weight:600;margin-top:2px;word-break:break-all}
+  .cell.l .v{color:var(--left)}
+  .cell.r .v{color:var(--right)}
+  .gap-row{
+    border:1px solid var(--rule-fine);background:#fff;padding:8px 9px;margin-bottom:14px;
+    display:flex;justify-content:space-between;align-items:center;gap:8px;
+  }
+  .gap-row .k{font-family:var(--mono);font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-soft)}
+  .gap-row .v{font-family:var(--mono);font-size:15px;font-weight:600}
+
+  .ctl-label{
+    font-family:var(--mono);font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-soft);
+    display:flex;justify-content:space-between;margin-bottom:6px;
+  }
+  input[type=range]{width:100%;accent-color:var(--steel);margin:0 0 10px}
+  .btns{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:14px}
+  button{font-family:var(--display);cursor:pointer}
+  .btn{
+    background:#fff;border:1px solid var(--rule);color:var(--ink);
+    font-size:12.5px;font-weight:500;padding:8px 6px;border-radius:2px;
+    transition:border-color .12s,background .12s;
+  }
+  .btn:hover{border-color:var(--steel);background:#fff}
+  .btn.wide{grid-column:1/-1}
+  .btn.primary{background:var(--ink);border-color:var(--ink);color:#fff;font-weight:600;padding:11px 6px}
+  .btn.primary:hover{background:#0C161F}
+  .btn.primary:disabled{background:#B9C5CD;border-color:#B9C5CD;cursor:not-allowed}
+  :focus-visible{outline:2px solid var(--beam);outline-offset:2px}
+
+  /* ---------- three conditions ---------- */
+  .cond-title{
+    font-family:var(--mono);font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-soft);
+    margin:0 0 8px;padding-top:12px;border-top:1px solid var(--rule-fine);
+  }
+  .cond{display:flex;gap:9px;align-items:flex-start;padding:6px 0;font-size:13.5px;line-height:1.35}
+  .cond .badge{
+    font-family:var(--mono);font-size:11px;font-weight:600;flex:0 0 auto;
+    width:20px;height:20px;line-height:19px;text-align:center;border:1px solid var(--rule);
+    border-radius:50%;color:var(--ink-soft);background:#fff;
+  }
+  .cond.pass .badge{border-color:var(--left);color:#fff;background:var(--left)}
+  .cond.fail .badge{border-color:var(--right);color:#fff;background:var(--right)}
+  .cond.pass .txt{color:var(--ink)}
+  .cond.fail .txt{color:var(--right)}
+  .verdict{
+    margin-top:12px;padding:10px 11px;border:1px solid var(--rule);background:#fff;
+    font-size:13.5px;line-height:1.45;
+  }
+  .verdict .tag{
+    font-family:var(--display);font-weight:700;font-size:12px;letter-spacing:.08em;text-transform:uppercase;
+    display:block;margin-bottom:4px;
+  }
+  .verdict.ok{border-left:3px solid var(--left)}
+  .verdict.ok .tag{color:var(--left)}
+  .verdict.bad{border-left:3px solid var(--right)}
+  .verdict.bad .tag{color:var(--right)}
+  .verdict.warn{border-left:3px solid var(--beam)}
+  .verdict.warn .tag{color:#B45F0C}
+  .verdict.idle{border-left:3px solid var(--rule);color:var(--ink-soft)}
+
+  /* ---------- log ---------- */
+  .log-wrap{margin-top:14px}
+  .log-scroll{max-height:230px;overflow:auto}
+  table{border-collapse:collapse;width:100%;font-family:var(--mono);font-size:12px}
+  th,td{padding:6px 10px;text-align:right;white-space:nowrap;border-bottom:1px solid var(--rule-fine)}
+  th{
+    font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--steel);
+    font-weight:500;position:sticky;top:0;background:var(--sheet);border-bottom:1px solid var(--rule);
+  }
+  th:first-child,td:first-child{text-align:left}
+  td.l{color:var(--left)}
+  td.r{color:var(--right)}
+  tr.empty td{text-align:center;color:var(--ink-soft);font-family:var(--body);font-size:13.5px;padding:22px}
+
+  /* ---------- questions ---------- */
+  .qs{margin-top:44px}
+  h2{font-family:var(--display);font-weight:700;font-size:26px;letter-spacing:-.01em;margin:0 0 6px}
+  .qs-sub{color:var(--ink-soft);margin:0 0 20px;font-size:15.5px}
+  .q{background:var(--sheet);border:1px solid var(--rule);border-radius:2px;padding:16px 18px;margin-bottom:12px}
+  .q-head{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:9px}
+  .q-num{font-family:var(--mono);font-size:11px;font-weight:600;color:var(--ink)}
+  .chip{
+    font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;
+    border:1px solid var(--rule);padding:2px 7px;color:var(--ink-soft);border-radius:2px;
+  }
+  .chip.sec{border-color:var(--steel);color:var(--steel)}
+  .q-body{font-size:15.5px;margin:0 0 12px}
+  .q-body code{font-family:var(--mono);font-size:14px;background:#EAEFF2;padding:1px 4px;border-radius:2px}
+  .fields{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:10px}
+  .field{display:flex;align-items:center;gap:7px;font-family:var(--mono);font-size:12.5px;color:var(--ink-soft)}
+  input[type=text]{
+    font-family:var(--mono);font-size:14px;width:120px;padding:7px 9px;
+    border:1px solid var(--rule);border-radius:2px;background:#fff;color:var(--ink);
+  }
+  input[type=text]:focus{border-color:var(--steel);outline:none}
+  .opts{display:flex;flex-direction:column;gap:6px;margin-bottom:10px}
+  .opt{display:flex;gap:9px;align-items:flex-start;font-size:15px;cursor:pointer;padding:5px 7px;border:1px solid transparent;border-radius:2px}
+  .opt:hover{border-color:var(--rule);background:#fff}
+  .opt input{margin-top:5px;accent-color:var(--steel);flex:0 0 auto}
+  .q-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .fb{font-size:14px;padding:9px 11px;border-left:3px solid var(--rule);background:#fff;margin-top:10px;display:none}
+  .fb.show{display:block}
+  .fb.right{border-left-color:var(--left)}
+  .fb.wrong{border-left-color:var(--right)}
+  .fb b{font-family:var(--display);font-size:12px;letter-spacing:.06em;text-transform:uppercase;display:block;margin-bottom:3px}
+  .fb.right b{color:var(--left)}
+  .fb.wrong b{color:var(--right)}
+  textarea{
+    width:100%;min-height:110px;font-family:var(--body);font-size:15px;padding:10px;
+    border:1px solid var(--rule);border-radius:2px;background:#fff;color:var(--ink);resize:vertical;
+  }
+  textarea:focus{border-color:var(--steel);outline:none}
+  .model{margin-top:10px;font-size:14.5px;padding:10px 12px;background:#fff;border-left:3px solid var(--steel);display:none}
+  .model.show{display:block}
+  .scorebar{
+    display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;
+    background:var(--ink);color:#fff;padding:12px 16px;border-radius:2px;margin-bottom:18px;
+  }
+  .scorebar .s-label{font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:#93B0C4}
+  .scorebar .s-val{font-family:var(--display);font-weight:700;font-size:22px}
+  footer{margin-top:40px;padding-top:16px;border-top:1px solid var(--rule);font-size:13px;color:var(--ink-soft)}
+
+  @media (max-width:900px){
+    .console{grid-template-columns:1fr}
+    #stage{height:340px}
+    .tab{flex:1 1 100%}
+  }
+  @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <p class="eyebrow">Calculus 1 · Lesson 1.3 · Interactive 1.3.1</p>
+  <h1>The Support-Beam Inspector</h1>
+  <p class="lede">A support beam must be installed under the track at <b>x = a</b>, and its height has to match the rail exactly. Send two probes crawling toward that station — one from the left, one from the right — and read what height the track is <b>heading toward</b>. Then try to install the beam and find out whether the track is continuous there.</p>
+
+  <hr class="hr">
+
+  <div class="tabs" role="tablist" aria-label="Track section"></div>
+
+  <div class="console">
+    <div class="panel">
+      <div class="panel-head">
+        <span id="stageTitle">Section A · Main hill</span>
+        <span id="stageMag">Mag ×1</span>
+      </div>
+      <canvas id="stage"></canvas>
+      <p class="stage-note">
+        <span class="key"><span class="sw" style="background:var(--left)"></span>approaching from the left</span>
+        <span class="key"><span class="sw" style="background:var(--right)"></span>approaching from the right</span>
+        <span class="key"><span class="sw dash" style="background:var(--beam)"></span>beam station x = a</span>
+        <span class="key"><span class="sw ring"></span>hole (value undefined)</span>
+      </p>
+      <p class="stage-note" id="stageNote"></p>
+    </div>
+
+    <div class="panel instr">
+      <div class="readout">
+        <div class="cell l">
+          <div class="k">Left probe · x</div>
+          <div class="v" id="xL">—</div>
+        </div>
+        <div class="cell r">
+          <div class="k">Right probe · x</div>
+          <div class="v" id="xR">—</div>
+        </div>
+        <div class="cell l">
+          <div class="k">Height f(x)</div>
+          <div class="v" id="fL">—</div>
+        </div>
+        <div class="cell r">
+          <div class="k">Height f(x)</div>
+          <div class="v" id="fR">—</div>
+        </div>
+      </div>
+
+      <div class="gap-row">
+        <span class="k">Gap between probes</span>
+        <span class="v" id="gapV">—</span>
+      </div>
+
+      <div class="ctl-label"><span>Distance to beam |x − a|</span><span id="deltaV">2</span></div>
+      <input type="range" id="delta" min="0" max="1000" value="0" step="1" aria-label="Distance from the probes to the beam station">
+
+      <div class="btns">
+        <button class="btn" id="bStep">Step closer</button>
+        <button class="btn" id="bTen">×10 closer</button>
+        <button class="btn" id="bOut">Step back</button>
+        <button class="btn" id="bReset">Reset view</button>
+        <button class="btn wide" id="bLog">Log this reading</button>
+        <button class="btn primary wide" id="bInstall">Install the beam at x = a</button>
+      </div>
+
+      <p class="cond-title">Definition 1.3 · continuity check</p>
+      <div class="cond" id="c1"><span class="badge">1</span><span class="txt">f(a) is defined</span></div>
+      <div class="cond" id="c2"><span class="badge">2</span><span class="txt">lim<sub>x→a</sub> f(x) exists (left = right)</span></div>
+      <div class="cond" id="c3"><span class="badge">3</span><span class="txt">lim<sub>x→a</sub> f(x) = f(a)</span></div>
+
+      <div class="verdict idle" id="verdict">
+        <span class="tag">Awaiting reading</span>
+        Bring the probes within 0.01 of the beam station, then install.
+      </div>
+    </div>
+  </div>
+
+  <div class="panel log-wrap">
+    <div class="panel-head">
+      <span>Inspection log · Section <span id="logSec">A</span></span>
+      <button class="btn" id="bClear" style="padding:3px 9px;font-size:11px">Clear log</button>
+    </div>
+    <div class="log-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>|x − a|</th>
+            <th>x (left)</th><th>f(x) left</th>
+            <th>x (right)</th><th>f(x) right</th>
+            <th>Gap</th>
+          </tr>
+        </thead>
+        <tbody id="logBody">
+          <tr class="empty"><td colspan="6">No readings yet. Move the probes closer, then log a reading to build the table.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ================= QUESTIONS ================= -->
+  <section class="qs">
+    <h2>Check your understanding</h2>
+    <p class="qs-sub">Each question needs a reading from the inspector — use the section named on the chip.</p>
+
+    <div class="scorebar">
+      <span class="s-label">Auto-graded score</span>
+      <span class="s-val"><span id="score">0</span> / 6</span>
+    </div>
+
+    <div id="qHost"></div>
+
+    <div class="q">
+      <div class="q-head">
+        <span class="q-num">Question 7</span>
+        <span class="chip sec">Sections A &amp; C</span>
+        <span class="chip">Evaluate</span>
+      </div>
+      <p class="q-body">A classmate argues: <em>“If you just zoom in far enough, the two probes always end up at the same height — so every limit exists.”</em> Use Section A and Section C to critique this claim in 3–4 sentences. Say what the classmate is confusing, and what you actually observe on each section as the magnification rises.</p>
+      <textarea id="q7" placeholder="Write your critique here…"></textarea>
+      <div class="q-actions" style="margin-top:10px">
+        <button class="btn" id="q7btn">Compare with a model answer</button>
+      </div>
+      <div class="model" id="q7model">
+        <b style="font-family:var(--display);font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--steel);display:block;margin-bottom:4px">Model answer</b>
+        The claim is false. On Section A, zooming does make the two probe heights close in on 7.64 — the gap shrinks toward 0, which is exactly what it looks like for a limit to exist. But on Section C the gap sticks at 3 no matter how far you magnify: the left rail keeps arriving at 0 and the right rail keeps arriving at 3. Magnification does not create agreement, it only reveals whether the agreement was there. The classmate is confusing “I can’t see the gap” with “there is no gap,” and treating a limit as something zooming produces rather than something the function either has or doesn’t.
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    Interactive companion to Lesson 1.3 — Limits and Continuity. Sections A–D reproduce the roller-coaster hill, the spliced rail, the inspection flaw of Example 1.2, and the asymptote of Example 1.3(c).
+  </footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ---------------- track definitions (straight from the lesson) ---------------- */
+  const TRACKS = {
+    A: {
+      name:'Main hill',
+      fn:'h(x) = −0.09(x − 6)² + 8',
+      a:8, L:7.64, faDefined:true, fa:7.64,
+      focusY:7.64, baseYHalf:3,
+      f:x => -0.09*(x-6)*(x-6) + 8,
+      branches:[{lo:-Infinity, hi:Infinity, f:x => -0.09*(x-6)*(x-6) + 8}],
+      marks:[{x:8, y:7.64, open:false}],
+      asym:null,
+      note:'The design team must install a support beam at x = 8. Its height has to match the track exactly.',
+      kind:'continuous',
+      verdict:{cls:'ok', tag:'Beam installed — flush fit',
+        text:'Both rails arrive at 7.64 and h(8) = 7.64. All three conditions of Definition 1.3 hold, so h is continuous at x = 8. The beam meets the track with no step and no gap.'}
+    },
+    B: {
+      name:'Spliced rail',
+      fn:'f(x) = (x² − 4)/(x − 2)',
+      a:2, L:4, faDefined:false, fa:null,
+      focusY:4, baseYHalf:4,
+      f:x => Math.abs(x-2) < 1e-14 ? NaN : (x*x-4)/(x-2),
+      branches:[
+        {lo:-Infinity, hi:2, f:x => (x*x-4)/(x-2)},
+        {lo:2, hi:Infinity, f:x => (x*x-4)/(x-2)}
+      ],
+      marks:[{x:2, y:4, open:true}],
+      asym:null,
+      note:'The rail is spliced at x = 2 and the weld is missing: f(2) has no value. The rest of the rail is untouched.',
+      kind:'removable',
+      verdict:{cls:'warn', tag:'Beam height known — rail has a hole',
+        text:'Both rails arrive at 4, so lim x→2 f(x) = 4 exists. But f(2) is undefined, so condition 1 fails and f is discontinuous at x = 2. This is a removable discontinuity: defining f(2) = 4 patches the hole and makes f continuous.'}
+    },
+    C: {
+      name:'Inspection flaw',
+      fn:'f(x) = x² − 1 (x<1) · 3 (x=1) · 2x + 1 (x>1)',
+      a:1, L:null, faDefined:true, fa:3,
+      focusY:1.5, baseYHalf:6,
+      f:x => x < 1 ? x*x-1 : (x > 1 ? 2*x+1 : 3),
+      branches:[
+        {lo:-Infinity, hi:1, f:x => x*x-1},
+        {lo:1, hi:Infinity, f:x => 2*x+1}
+      ],
+      marks:[{x:1, y:0, open:true},{x:1, y:3, open:false}],
+      asym:null,
+      note:'Two track sections were built separately and do not meet at x = 1. f(1) = 3 is perfectly well defined.',
+      kind:'jump',
+      verdict:{cls:'bad', tag:'Beam rejected — rails disagree',
+        text:'The left rail arrives at 0, the right rail arrives at 3. The one-sided limits disagree, so lim x→1 f(x) does not exist — condition 2 fails even though f(1) = 3 is defined. This is a jump discontinuity: no single beam height can serve both rails.'}
+    },
+    D: {
+      name:'Asymptote',
+      fn:'h(x) = 1/(x − 3)',
+      a:3, L:null, faDefined:false, fa:null,
+      focusY:0, baseYHalf:12,
+      f:x => Math.abs(x-3) < 1e-14 ? NaN : 1/(x-3),
+      branches:[
+        {lo:-Infinity, hi:3, f:x => 1/(x-3)},
+        {lo:3, hi:Infinity, f:x => 1/(x-3)}
+      ],
+      marks:[],
+      asym:3,
+      note:'Near x = 3 the modelled height runs away without bound. Watch the probes leave the sheet as you close in.',
+      kind:'infinite',
+      verdict:{cls:'bad', tag:'Beam rejected — no finite height',
+        text:'h(3) is undefined and the probe heights grow without bound — they do not settle on any real number from either side, so neither one-sided limit exists. Conditions 1 and 2 both fail. This is an infinite discontinuity, with a vertical asymptote at x = 3.'}
+    }
+  };
+
+  const D_MAX = 2, D_MIN = 1e-4;
+  let key = 'A';
+  let T = TRACKS[key];
+  let delta = D_MAX;
+  let probed = false;              // has the student brought the probes within 0.01?
+  let installed = false;
+  const logs = {A:[],B:[],C:[],D:[]};
+
+  const $ = s => document.querySelector(s);
+  const cv = $('#stage'), ctx = cv.getContext('2d');
+
+  /* ---------------- helpers ---------------- */
+  const clamp = (v,a,b) => Math.min(b, Math.max(a, v));
+  function fmt(v){
+    if(v === null || v === undefined || !isFinite(v)) return '—';
+    const m = Math.abs(v);
+    if(m >= 1000) return v.toFixed(1);
+    if(m >= 100)  return v.toFixed(3);
+    return v.toFixed(4);
+  }
+  function fmtD(d){ return (+d.toFixed(5)).toString(); }
+  function ticks(min, max, want){
+    const raw = (max-min)/want;
+    const mag = Math.pow(10, Math.floor(Math.log10(raw)));
+    const n = raw/mag;
+    const step = (n>=5?10:n>=2?5:n>=1?2:1)*mag;
+    const out = [];
+    for(let t = Math.ceil(min/step)*step; t <= max+step*1e-6; t += step) out.push(t);
+    const dec = clamp(Math.ceil(-Math.log10(step)), 0, 8);
+    return {vals:out, dec:dec};
+  }
+
+  /* ---------------- geometry of the current view ---------------- */
+  function view(){
+    const xhalf = delta*3;
+    const fL = T.f(T.a-delta), fR = T.f(T.a+delta);
+    let dev = 0;
+    if(isFinite(fL)) dev = Math.max(dev, Math.abs(fL - T.focusY));
+    if(isFinite(fR)) dev = Math.max(dev, Math.abs(fR - T.focusY));
+    // Normally the sheet zooms in on the limit. On an asymptote the values outrun
+    // any fixed window, so the window grows too — but slower than the probes, which
+    // keeps the runaway rails on the sheet while the probes leave it.
+    const grow = T.kind === 'infinite' ? dev*0.45 : 0;
+    const yhalf = Math.max(clamp(dev*2.4, 1e-7, T.baseYHalf), grow);
+    return {
+      xmin:T.a-xhalf, xmax:T.a+xhalf,
+      ymin:T.focusY-yhalf, ymax:T.focusY+yhalf,
+      mag: D_MAX/delta
+    };
+  }
+
+  /* ---------------- drawing ---------------- */
+  function draw(){
+    const dpr = window.devicePixelRatio || 1;
+    const W = cv.clientWidth, H = cv.clientHeight;
+    cv.width = Math.round(W*dpr); cv.height = Math.round(H*dpr);
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+
+    const v = view();
+    const PL = 62, PR = 18, PT = 16, PB = 34;
+    const pw = W-PL-PR, ph = H-PT-PB;
+    const X = x => PL + (x-v.xmin)/(v.xmax-v.xmin)*pw;
+    const Y = y => PT + (v.ymax-y)/(v.ymax-v.ymin)*ph;
+
+    ctx.clearRect(0,0,W,H);
+    ctx.fillStyle = '#FAFCFD'; ctx.fillRect(0,0,W,H);
+    ctx.fillStyle = '#FFFFFF'; ctx.fillRect(PL,PT,pw,ph);
+
+    const tx = ticks(v.xmin, v.xmax, 6), ty = ticks(v.ymin, v.ymax, 5);
+
+    // grid
+    ctx.lineWidth = 1; ctx.strokeStyle = '#E4EAEE';
+    ctx.beginPath();
+    tx.vals.forEach(t => { const p = Math.round(X(t))+.5; ctx.moveTo(p,PT); ctx.lineTo(p,PT+ph); });
+    ty.vals.forEach(t => { const p = Math.round(Y(t))+.5; ctx.moveTo(PL,p); ctx.lineTo(PL+pw,p); });
+    ctx.stroke();
+
+    // tick labels
+    ctx.fillStyle = '#5C6D7A';
+    ctx.font = '11px "IBM Plex Mono", monospace';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+    tx.vals.forEach(t => ctx.fillText(t.toFixed(tx.dec), X(t), PT+ph+8));
+    ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+    ty.vals.forEach(t => ctx.fillText(t.toFixed(ty.dec), PL-8, Y(t)));
+
+    // axes if visible
+    ctx.strokeStyle = '#B7C4CD'; ctx.lineWidth = 1;
+    ctx.beginPath();
+    if(v.ymin < 0 && v.ymax > 0){ const p = Math.round(Y(0))+.5; ctx.moveTo(PL,p); ctx.lineTo(PL+pw,p); }
+    if(v.xmin < 0 && v.xmax > 0){ const p = Math.round(X(0))+.5; ctx.moveTo(p,PT); ctx.lineTo(p,PT+ph); }
+    ctx.stroke();
+
+    ctx.save();
+    ctx.beginPath(); ctx.rect(PL,PT,pw,ph); ctx.clip();
+
+    // asymptote
+    if(T.asym !== null){
+      ctx.setLineDash([3,4]); ctx.strokeStyle = '#9E2B2B'; ctx.lineWidth = 1.2;
+      ctx.beginPath(); ctx.moveTo(X(T.asym),PT); ctx.lineTo(X(T.asym),PT+ph); ctx.stroke();
+      ctx.setLineDash([]);
+    }
+
+    // beam station
+    ctx.setLineDash([6,4]); ctx.strokeStyle = '#E07A1F'; ctx.lineWidth = 1.6;
+    ctx.beginPath(); ctx.moveTo(X(T.a),PT); ctx.lineTo(X(T.a),PT+ph); ctx.stroke();
+    ctx.setLineDash([]);
+
+    // target ring where the limit lives
+    if(T.L !== null && T.L >= v.ymin && T.L <= v.ymax){
+      ctx.strokeStyle = '#E07A1F'; ctx.lineWidth = 1.4;
+      ctx.beginPath(); ctx.arc(X(T.a), Y(T.L), 9, 0, Math.PI*2); ctx.stroke();
+    }
+
+    // curve branches
+    ctx.strokeStyle = '#16222E'; ctx.lineWidth = 2.2;
+    ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+    T.branches.forEach(b => {
+      const lo = Math.max(b.lo, v.xmin), hi = Math.min(b.hi, v.xmax);
+      if(!(hi > lo)) return;
+      const N = 700, eps = (hi-lo)*1e-9;
+      ctx.beginPath();
+      let started = false;
+      for(let i = 0; i <= N; i++){
+        let x = lo + (hi-lo)*i/N;
+        if(i === 0) x += eps; if(i === N) x -= eps;
+        const y = b.f(x);
+        if(!isFinite(y)){ started = false; continue; }
+        const py = Y(y);
+        if(py < PT-4000 || py > PT+ph+4000){ started = false; continue; }
+        if(!started){ ctx.moveTo(X(x),py); started = true; } else ctx.lineTo(X(x),py);
+      }
+      ctx.stroke();
+    });
+
+    // marks (holes / defined points)
+    T.marks.forEach(m => {
+      const px = X(m.x), py = Y(m.y);
+      ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(px,py,5,0,Math.PI*2);
+      if(m.open){ ctx.fillStyle = '#FFFFFF'; ctx.fill(); ctx.strokeStyle = '#16222E'; ctx.stroke(); }
+      else { ctx.fillStyle = '#E07A1F'; ctx.fill(); }
+    });
+
+    // probes
+    const probe = (side) => {
+      const x = T.a + side*delta, y = T.f(x);
+      const col = side < 0 ? '#1F7A55' : '#9E2B2B';
+      const px = X(x);
+      if(!isFinite(y)) return;
+      const py = Y(y);
+      const off = py < PT ? -1 : (py > PT+ph ? 1 : 0);
+      // trail of approaching dots
+      ctx.fillStyle = col;
+      for(let k = 1; k <= 3; k++){
+        const xt = T.a + side*delta*(1+k*0.9);
+        if(xt < v.xmin || xt > v.xmax) continue;
+        const yt = T.f(xt);
+        if(!isFinite(yt)) continue;
+        const pty = Y(yt);
+        if(pty < PT || pty > PT+ph) continue;
+        ctx.globalAlpha = 0.34 - k*0.07;
+        ctx.beginPath(); ctx.arc(X(xt), pty, 3.4, 0, Math.PI*2); ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+      if(off !== 0){
+        // off-scale chevron at the edge
+        const ey = off < 0 ? PT+12 : PT+ph-12;
+        ctx.fillStyle = col;
+        ctx.beginPath();
+        ctx.moveTo(px, ey + (off<0?-9:9));
+        ctx.lineTo(px-7, ey + (off<0?4:-4));
+        ctx.lineTo(px+7, ey + (off<0?4:-4));
+        ctx.closePath(); ctx.fill();
+        ctx.font = '600 10px "IBM Plex Mono", monospace';
+        ctx.textAlign = 'center'; ctx.textBaseline = off<0?'top':'bottom';
+        ctx.fillText('OFF SCALE', px, off<0 ? ey+8 : ey-8);
+        return;
+      }
+      // drop line to the beam height
+      ctx.setLineDash([2,3]); ctx.strokeStyle = col; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(px,py); ctx.lineTo(X(T.a),py); ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.beginPath(); ctx.arc(px,py,6,0,Math.PI*2);
+      ctx.fillStyle = col; ctx.fill();
+      ctx.strokeStyle = '#FFFFFF'; ctx.lineWidth = 1.5; ctx.stroke();
+      // height label
+      ctx.font = '600 11px "IBM Plex Mono", monospace';
+      ctx.fillStyle = col;
+      ctx.textBaseline = 'bottom';
+      ctx.textAlign = side < 0 ? 'right' : 'left';
+      const lx = side < 0 ? px-9 : px+9;
+      ctx.fillText(fmt(y), clamp(lx, PL+4, PL+pw-4), py-7);
+    };
+    probe(-1); probe(1);
+
+    ctx.restore();
+
+    // title block, lower-right — the drafting sheet's stamp
+    const bw = 158, bh = 46, bx = PL+pw-bw-8, by = PT+ph-bh-8;
+    ctx.fillStyle = 'rgba(255,255,255,0.94)'; ctx.fillRect(bx,by,bw,bh);
+    ctx.strokeStyle = '#16222E'; ctx.lineWidth = 1; ctx.strokeRect(bx+.5,by+.5,bw,bh);
+    ctx.beginPath(); ctx.moveTo(bx, by+22.5); ctx.lineTo(bx+bw, by+22.5); ctx.stroke();
+    ctx.font = '9px "IBM Plex Mono", monospace'; ctx.fillStyle = '#5C6D7A';
+    ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+    ctx.fillText('STATION', bx+8, by+11);
+    ctx.fillText('MAG', bx+8, by+34);
+    ctx.font = '600 11px "IBM Plex Mono", monospace'; ctx.fillStyle = '#16222E';
+    ctx.textAlign = 'right';
+    ctx.fillText('x = '+T.a, bx+bw-8, by+11);
+    ctx.fillText('×'+(v.mag >= 100 ? Math.round(v.mag) : v.mag.toFixed(1)), bx+bw-8, by+34);
+
+    $('#stageMag').textContent = 'Mag ×' + (v.mag >= 100 ? Math.round(v.mag) : v.mag.toFixed(1));
+  }
+
+  /* ---------------- panel refresh ---------------- */
+  function refresh(){
+    const xL = T.a-delta, xR = T.a+delta;
+    const fL = T.f(xL), fR = T.f(xR);
+    $('#xL').textContent = fmt(xL);
+    $('#xR').textContent = fmt(xR);
+    $('#fL').textContent = fmt(fL);
+    $('#fR').textContent = fmt(fR);
+    const gap = (isFinite(fL) && isFinite(fR)) ? Math.abs(fR-fL) : NaN;
+    $('#gapV').textContent = isFinite(gap) ? (gap < 0.001 ? gap.toExponential(2).replace('e-','e−') : gap.toFixed(4)) : '—';
+    $('#deltaV').textContent = fmtD(delta);
+    if(delta <= 0.01) probed = true;
+    $('#bInstall').disabled = !probed;
+    if(!installed){
+      $('#verdict').className = 'verdict idle';
+      $('#verdict').innerHTML = '<span class="tag">Awaiting reading</span>' +
+        (probed ? 'Probes are in range. Install the beam to run the three checks.'
+                : 'Bring the probes within 0.01 of the beam station, then install.');
+    }
+    draw();
+  }
+
+  /* ---------------- log ---------------- */
+  function renderLog(){
+    const rows = logs[key];
+    const tb = $('#logBody');
+    $('#logSec').textContent = key;
+    if(!rows.length){
+      tb.innerHTML = '<tr class="empty"><td colspan="6">No readings yet. Move the probes closer, then log a reading to build the table.</td></tr>';
+      return;
+    }
+    tb.innerHTML = rows.map(r =>
+      '<tr><td>'+fmtD(r.d)+'</td>'+
+      '<td class="l">'+fmt(r.xL)+'</td><td class="l">'+fmt(r.fL)+'</td>'+
+      '<td class="r">'+fmt(r.xR)+'</td><td class="r">'+fmt(r.fR)+'</td>'+
+      '<td>'+(isFinite(r.gap) ? (r.gap < 0.001 ? r.gap.toExponential(2).replace('e-','e−') : r.gap.toFixed(4)) : '—')+'</td></tr>'
+    ).join('');
+  }
+  function logReading(){
+    const xL = T.a-delta, xR = T.a+delta, fL = T.f(xL), fR = T.f(xR);
+    const rows = logs[key];
+    if(rows.length && Math.abs(rows[rows.length-1].d - delta) < 1e-12) return;
+    rows.push({d:delta, xL:xL, xR:xR, fL:fL, fR:fR, gap:Math.abs(fR-fL)});
+    if(rows.length > 40) rows.shift();
+    renderLog();
+  }
+
+  /* ---------------- install the beam ---------------- */
+  function install(){
+    installed = true;
+    const k = T.kind;
+    const pass = {
+      1: T.faDefined,
+      2: (k === 'continuous' || k === 'removable'),
+      3: (k === 'continuous')
+    };
+    [1,2,3].forEach(i => {
+      const el = $('#c'+i);
+      el.className = 'cond ' + (pass[i] ? 'pass' : 'fail');
+      el.querySelector('.badge').textContent = pass[i] ? '✓' : '✕';
+    });
+    const v = T.verdict;
+    $('#verdict').className = 'verdict ' + v.cls;
+    $('#verdict').innerHTML = '<span class="tag">'+v.tag+'</span>'+v.text;
+    draw();
+  }
+  function resetConds(){
+    installed = false;
+    [1,2,3].forEach(i => {
+      const el = $('#c'+i);
+      el.className = 'cond';
+      el.querySelector('.badge').textContent = String(i);
+    });
+  }
+
+  /* ---------------- tabs ---------------- */
+  const tabHost = document.querySelector('.tabs');
+  Object.keys(TRACKS).forEach(k => {
+    const t = TRACKS[k], b = document.createElement('button');
+    b.className = 'tab'; b.setAttribute('role','tab'); b.dataset.k = k;
+    b.setAttribute('aria-selected', k === key ? 'true' : 'false');
+    b.innerHTML = '<span class="tab-id">Section '+k+' · '+t.name+'</span><span class="tab-fn">'+t.fn+'</span>';
+    b.addEventListener('click', () => select(k));
+    tabHost.appendChild(b);
+  });
+  function select(k){
+    key = k; T = TRACKS[k];
+    delta = D_MAX; probed = false;
+    resetConds();
+    document.querySelectorAll('.tab').forEach(b => b.setAttribute('aria-selected', b.dataset.k === k ? 'true' : 'false'));
+    $('#stageTitle').textContent = 'Section '+k+' · '+T.name;
+    $('#stageNote').textContent = T.note;
+    $('#delta').value = 0;
+    renderLog(); refresh();
+  }
+
+  /* ---------------- controls ---------------- */
+  const sliderToDelta = t => D_MAX*Math.pow(D_MIN/D_MAX, t/1000);
+  const deltaToSlider = d => 1000*Math.log(d/D_MAX)/Math.log(D_MIN/D_MAX);
+  function setDelta(d, log){
+    delta = clamp(d, D_MIN, D_MAX);
+    $('#delta').value = Math.round(deltaToSlider(delta));
+    refresh();
+    if(log) logReading();
+  }
+  // standard inspection distances — the rungs match the style of table in the lesson
+  const LADDER = [2,1,0.5,0.2,0.1,0.05,0.02,0.01,0.005,0.002,0.001,0.0005,0.0002,0.0001];
+  const rungDown = d => { const r = LADDER.filter(v => v < d*0.999); return r.length ? r[0] : D_MIN; };
+  const rungUp   = d => { const r = LADDER.filter(v => v > d*1.001); return r.length ? r[r.length-1] : D_MAX; };
+
+  $('#delta').addEventListener('input', e => { delta = sliderToDelta(+e.target.value); refresh(); });
+  $('#bStep').addEventListener('click', () => setDelta(rungDown(delta), true));
+  $('#bTen').addEventListener('click', () => setDelta(delta/10, true));
+  $('#bOut').addEventListener('click', () => setDelta(rungUp(delta), false));
+  $('#bReset').addEventListener('click', () => { setDelta(D_MAX, false); resetConds(); refresh(); });
+  $('#bLog').addEventListener('click', () => logReading());
+  $('#bClear').addEventListener('click', () => { logs[key] = []; renderLog(); });
+  $('#bInstall').addEventListener('click', install);
+
+  /* ---------------- drag the probes ---------------- */
+  let dragging = 0;
+  function pxToX(px){
+    const v = view(), PL = 62, PR = 18, pw = cv.clientWidth-PL-PR;
+    return v.xmin + (px-PL)/pw*(v.xmax-v.xmin);
+  }
+  function probePx(side){
+    const v = view(), PL = 62, PR = 18, pw = cv.clientWidth-PL-PR;
+    return PL + ((T.a+side*delta)-v.xmin)/(v.xmax-v.xmin)*pw;
+  }
+  cv.addEventListener('pointerdown', e => {
+    const r = cv.getBoundingClientRect(), px = e.clientX-r.left;
+    const dL = Math.abs(px-probePx(-1)), dR = Math.abs(px-probePx(1));
+    if(Math.min(dL,dR) > 26) return;
+    dragging = dL < dR ? -1 : 1;
+    cv.setPointerCapture(e.pointerId);
+    e.preventDefault();
+  });
+  cv.addEventListener('pointermove', e => {
+    const r = cv.getBoundingClientRect(), px = e.clientX-r.left;
+    if(!dragging){
+      const near = Math.min(Math.abs(px-probePx(-1)), Math.abs(px-probePx(1))) < 26;
+      cv.style.cursor = near ? 'ew-resize' : 'crosshair';
+      return;
+    }
+    setDelta(Math.abs(pxToX(px)-T.a), false);
+  });
+  const stop = () => { dragging = 0; };
+  cv.addEventListener('pointerup', stop);
+  cv.addEventListener('pointercancel', stop);
+
+  window.addEventListener('resize', draw);
+
+  /* ================= QUESTIONS ================= */
+  const QS = [
+    { n:1, sec:'Section A', bloom:'Understand',
+      body:'Open <b>Section A</b> and press <b>Step closer</b> until |x − 8| = 0.01 or less. Both probes now report heights that agree to several decimals. What single value is h(x) heading toward as x → 8?',
+      fields:[{id:'a', label:'lim<sub>x→8</sub> h(x) =', ans:7.64, tol:0.02}],
+      why:'Both rails close in on 7.64. Note that you never had to evaluate h at 8 to find this — the limit is read off the approach, not the arrival.'
+    },
+    { n:2, sec:'Section A', bloom:'Understand',
+      body:'Still on Section A, watch the <b>Gap between probes</b> readout as you raise the magnification. What happens to it?',
+      mcq:['It grows without bound','It settles on a fixed non-zero number','It shrinks toward 0','It flips sign each time you zoom'],
+      correct:2,
+      why:'The gap shrinks toward 0. That collapse is what “the two-sided limit exists” looks like on an instrument: the left and right approaches are being squeezed onto one number.'
+    },
+    { n:3, sec:'Section B', bloom:'Apply',
+      body:'Switch to <b>Section B</b>, where <code>f(x) = (x² − 4)/(x − 2)</code>. Close in on x = 2 and read both probes. Report the limit — and note the open circle the console draws at x = 2.',
+      fields:[{id:'a', label:'lim<sub>x→2</sub> f(x) =', ans:4, tol:0.02}],
+      why:'The limit is 4. For x ≠ 2 the expression factors to (x+2)(x−2)/(x−2) = x + 2, so the rail is really the line y = x + 2 with a single point punched out. The limit exists; the function value does not.'
+    },
+    { n:4, sec:'Section B', bloom:'Analyze',
+      body:'Install the beam on Section B and read the three checks. Which condition of Definition 1.3 fails <b>first</b> at x = 2?',
+      mcq:['Condition 1 — f(2) is not defined','Condition 2 — the limit does not exist','Condition 3 — the limit and f(2) disagree','None fail; f is continuous at x = 2'],
+      correct:0,
+      why:'Condition 1 fails: f(2) is undefined. Condition 2 holds (the limit is 4), and condition 3 cannot even be tested once there is no f(2) to compare against. One condition failing is enough — and because the limit exists, the break is removable: define f(2) = 4 and the rail is whole.'
+    },
+    { n:5, sec:'Section C', bloom:'Analyze',
+      body:'Switch to <b>Section C</b>, the inspection flaw, and close in on x = 1. Report each one-sided limit, then decide the verdict.',
+      fields:[
+        {id:'a', label:'lim<sub>x→1⁻</sub> f(x) =', ans:0, tol:0.05},
+        {id:'b', label:'lim<sub>x→1⁺</sub> f(x) =', ans:3, tol:0.05}
+      ],
+      mcq:['lim<sub>x→1</sub> f(x) = 3, since f(1) = 3','lim<sub>x→1</sub> f(x) = 1.5, the average of the two','lim<sub>x→1</sub> f(x) does not exist — jump discontinuity','lim<sub>x→1</sub> f(x) = 0, since the left rail arrives first'],
+      correct:2,
+      why:'The left rail arrives at 1² − 1 = 0 and the right rail at 2(1) + 1 = 3. Since 0 ≠ 3, the two-sided limit does not exist — condition 2 fails — even though f(1) = 3 is perfectly well defined. That is a jump discontinuity, and no magnification will close it.'
+    },
+    { n:6, sec:'Section D', bloom:'Apply',
+      body:'Switch to <b>Section D</b>, <code>h(x) = 1/(x − 3)</code>. From the reset view press <b>×10 closer</b> three times, so |x − 3| = 0.002. Read the right probe’s height, then classify the break at x = 3.',
+      fields:[{id:'a', label:'h(3.002) =', ans:500, tol:2}],
+      mcq:['Removable — patch it by defining h(3)','Jump — the rails arrive at two different heights','Infinite — the heights grow without bound','Continuous — the console just cannot draw it'],
+      correct:2,
+      why:'h(3.002) = 1/0.002 = 500, and every further step closer multiplies the height again — watch the y-axis numbers climb while the probes stay off the top and bottom of the sheet. Neither one-sided limit is a real number, so this is an infinite discontinuity with a vertical asymptote at x = 3. Compare it with Section B: there the probes settled on a value, here they escape.'
+    }
+  ];
+
+  const host = $('#qHost');
+  const state = {};
+  QS.forEach(q => {
+    state[q.n] = false;
+    const d = document.createElement('div');
+    d.className = 'q';
+    let html = '<div class="q-head"><span class="q-num">Question '+q.n+'</span>' +
+               '<span class="chip sec">'+q.sec+'</span><span class="chip">'+q.bloom+'</span></div>' +
+               '<p class="q-body">'+q.body+'</p>';
+    if(q.fields){
+      html += '<div class="fields">' + q.fields.map(f =>
+        '<label class="field">'+f.label+' <input type="text" inputmode="decimal" data-f="'+f.id+'" autocomplete="off"></label>'
+      ).join('') + '</div>';
+    }
+    if(q.mcq){
+      html += '<div class="opts">' + q.mcq.map((o,i) =>
+        '<label class="opt"><input type="radio" name="q'+q.n+'" value="'+i+'"><span>'+o+'</span></label>'
+      ).join('') + '</div>';
+    }
+    html += '<div class="q-actions"><button class="btn" data-check="'+q.n+'">Check answer</button></div>' +
+            '<div class="fb" data-fb="'+q.n+'"></div>';
+    d.innerHTML = html;
+    host.appendChild(d);
+  });
+
+  host.addEventListener('click', e => {
+    const btn = e.target.closest('[data-check]');
+    if(!btn) return;
+    const n = +btn.dataset.check;
+    const q = QS.find(x => x.n === n);
+    const card = btn.closest('.q');
+    const fb = card.querySelector('[data-fb]');
+    let ok = true, blank = false;
+
+    if(q.fields){
+      q.fields.forEach(f => {
+        const el = card.querySelector('[data-f="'+f.id+'"]');
+        const raw = el.value.trim().replace('−','-');
+        if(raw === ''){ blank = true; ok = false; return; }
+        const val = Number(raw);
+        if(!isFinite(val) || Math.abs(val-f.ans) > f.tol) ok = false;
+      });
+    }
+    if(q.mcq){
+      const sel = card.querySelector('input[name="q'+n+'"]:checked');
+      if(!sel){ blank = true; ok = false; }
+      else if(+sel.value !== q.correct) ok = false;
+    }
+
+    fb.className = 'fb show ' + (ok ? 'right' : 'wrong');
+    if(blank){
+      fb.innerHTML = '<b>Incomplete</b>Answer every part first — take the reading on ' + q.sec + ', then fill in each box.';
+    } else {
+      fb.innerHTML = ok
+        ? '<b>Correct</b>' + q.why
+        : '<b>Not quite</b>Go back to ' + q.sec + ', bring the probes closer, and read the console again. Then re-check.';
+    }
+    if(ok && !state[n]){
+      state[n] = true;
+      $('#score').textContent = Object.values(state).filter(Boolean).length;
+    }
+  });
+
+  $('#q7btn').addEventListener('click', () => {
+    $('#q7model').classList.add('show');
+    $('#q7btn').textContent = 'Model answer shown';
+  });
+
+  /* ---------------- go ---------------- */
+  select('A');
+})();
+</script>
+</body>
+</html>
